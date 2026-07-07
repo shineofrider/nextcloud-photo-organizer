@@ -1,20 +1,15 @@
-from webdav import WebDAVClient
+from app.config import load_config
+from app.organizer import PhotoOrganizer
 
-from config import load_config
 
 def main():
+
     config = load_config()
 
-    client = WebDAVClient(
-        url=config.nextcloud.url,
-        username=config.nextcloud.username,
-        password=config.nextcloud.password,
-    )
+    organizer = PhotoOrganizer(config)
 
-    items = client.list_directory()
+    organizer.run()
 
-    print(items)
 
 if __name__ == "__main__":
     main()
-    

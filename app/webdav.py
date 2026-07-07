@@ -1,6 +1,9 @@
 import httpx
+from pathlib import PurePosixPath
 from urllib.parse import quote
-from parser import parse_propfind
+
+from app.parser import parse_propfind
+
 
 class WebDAVClient:
 
@@ -23,37 +26,116 @@ class WebDAVClient:
         return self._request("GET")
 
     def list_directory(self, path: str = ""):
+
         response = self._request(
             method="PROPFIND",
             path=path,
+            headers={
+                "Depth": "1",
+            },
         )
+
+        response.raise_for_status()
 
         return parse_propfind(
             response.text,
             self.webdav_root,
+            path,
         )
 
-    def move(self, source, destination):
-        pass
+    def get_info(self, path: str):
 
-    def mkdir(self, path):
-        pass
+        response = self._request(
+            method="PROPFIND",
+            path=path,
+            headers={
+                "Depth": "0",
+            },
+        )
 
-    def download(self, path):
-        pass
+        if response.status_code == 404:
+            return None
+
+        response.raise_for_status()
+
+        parent = str(PurePosixPath(path).parent)
+
+        items = parse_propfind(
+            response.text,
+            self.webdav_root,
+            parent,
+        )
+
+        if not items:
+            return None
+
+        return items[0]
+
+    def mkdir(self, path: str):
+
+        response = self._request(
+            method="MKCOL",
+            path=path,
+        )
+
+        if response.status_code in (201, 405):
+            return
+
+        response.raise_for_status()
+
+    def move(
+        self,
+        source: str,
+        destination: str,
+    ):
+
+        destination_url = (
+            f"{self.url}"
+            f"{self.webdav_root}"
+            f"{quote(destination.strip('/'), safe='/')}"
+        )
+
+        response = self._request(
+            method="MOVE",
+            path=source,
+            headers={
+                "Destination": destination_url,
+                "Overwrite": "F",
+            },
+        )
+
+        response.raise_for_status()
+
+    def delete(
+        self,
+        path: str,
+    ):
     
-    def _request(self, method: str, path: str = ""):
+        response = self._request(
+            method="DELETE",
+            path=path,
+        )
+    
+        response.raise_for_status()
+
+    def download(self, path: str):
+        pass
+
+    def _request(
+        self,
+        method: str,
+        path: str = "",
+        headers: dict | None = None,
+    ):
+
+        headers = headers or {}
+
         path = path.strip("/")
 
         url = f"{self.url}{self.webdav_root}"
 
         if path:
-            url += quote(path)
-
-        headers = {}
-
-        if method == "PROPFIND":
-            headers["Depth"] = "1"
+            url += quote(path, safe="/")
 
         response = self.session.request(
             method=method,

@@ -4,5 +4,8 @@ nextcloud:
   password: "password_app"
 
 phones:
-  - "photo/phone1"
-  - "photo/phone2"
+  - name: "pippo"
+    patch: "photo/phone1"
+  - name: "pluto"
+    patch: "photo/phone2"
+  

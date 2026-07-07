@@ -1,16 +1,24 @@
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum, auto
 
+class SyncDecision(Enum):
+    MOVE = auto()
+    DELETE_DUPLICATE = auto()
+    CONFLICT = auto()
 
 @dataclass
 class WebDAVItem:
-    """
-    path è sempre relativo alla root WebDAV configurata.
-    Esempio: Foto/2025/IMG0001.jpg
-    """
-
     name: str
     path: str
     is_dir: bool
+
     size: int | None = None
-    modified: datetime | None = None
+    last_modified: str | None = None
+    etag: str | None = None
+
+@dataclass
+class MoveOperation:
+    source: WebDAVItem
+    destination_path: str
+    decision: SyncDecision | None = None
