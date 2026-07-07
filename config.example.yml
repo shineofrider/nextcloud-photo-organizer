@@ -1,0 +1,8 @@
+nextcloud:
+  url: "https://cloud.example.com"
+  username: "nomeutente"
+  password: "password_app"
+
+phones:
+  - "photo/phone1"
+  - "photo/phone2"
