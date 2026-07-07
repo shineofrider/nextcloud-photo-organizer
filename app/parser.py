@@ -19,7 +19,7 @@ def parse_propfind(
 
     items = []
 
-    for response in root:
+    for response in root.findall("d:response", NS):
 
         href = response.find("d:href", NS)
 
