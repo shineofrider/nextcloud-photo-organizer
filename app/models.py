@@ -18,6 +18,11 @@ class WebDAVItem:
     etag: str | None = None
 
 @dataclass
+class PhotoDate:
+    year: int
+    month: int
+
+@dataclass
 class MoveOperation:
     source: WebDAVItem
     destination_path: str

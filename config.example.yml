@@ -1,11 +1,11 @@
 nextcloud:
-  url: "https://cloud.example.com"
-  username: "nomeutente"
-  password: "password_app"
+  url: ${NEXTCLOUD_URL}
+  username: ${NEXTCLOUD_USERNAME}
+  password: ${NEXTCLOUD_PASSWORD}
 
 phones:
-  - name: "pippo"
-    patch: "photo/phone1"
-  - name: "pluto"
-    patch: "photo/phone2"
+  - name: ${PHONE1_NAME}
+    patch: ${PHONE1_PATCH}
+  - name: ${PHONE2_NAME}
+    patch: ${PHONE2_PATCH}
   

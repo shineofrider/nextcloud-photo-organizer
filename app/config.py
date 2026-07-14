@@ -1,8 +1,8 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
-
 
 @dataclass
 class NextcloudConfig:
@@ -25,7 +25,12 @@ class AppConfig:
 
 
 def load_config() -> AppConfig:
-    config_file = Path("config.yml")
+    config_file = Path(
+        os.getenv(
+            "CONFIG_FILE",
+            "config.yml",
+        )
+    )
 
     with config_file.open(
         "r",

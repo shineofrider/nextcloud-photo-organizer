@@ -12,6 +12,9 @@ SUPPORTED_EXTENSIONS = {
     ".png",
     ".mp4",
     ".mov",
+    ".dng",
+    ".avi",
+    ".gif",
 }
 
 class PhotoOrganizer:
@@ -35,6 +38,8 @@ class PhotoOrganizer:
         )
 
         self.metadata = MetadataExtractor()
+        
+        self.created_folders: set[str] = set()
 
     def run(self):
 
@@ -61,7 +66,7 @@ class PhotoOrganizer:
             if self.is_supported_photo(item)
         ]
     
-        groups = self.group_by_year(photos)
+        groups = self.group_by_period(photos)
     
         operations = self.build_move_plan(
             phone,
@@ -80,7 +85,7 @@ class PhotoOrganizer:
         for operation in operations:
     
             try:
-    
+
                 destination = self.client.get_info(
                     operation.destination_path
                 )
@@ -97,9 +102,13 @@ class PhotoOrganizer:
                     )
     
                     if not self.config.dry_run:
-    
-                        self.client.mkdir(folder)
-    
+                    
+                        if folder not in self.created_folders:
+
+                            self.client.mkdir(folder)
+                    
+                            self.created_folders.add(folder)
+                    
                         self.client.move(
                             f"{phone.source}/{operation.source.path}",
                             operation.destination_path,
@@ -163,41 +172,55 @@ class PhotoOrganizer:
         print(f"Errori       : {error_count}")
 
 
-    def group_by_year(self, photos):
-
+    def group_by_period(self, photos):
+    
         groups = {}
-
+    
         for photo in photos:
-
-            year = self.metadata.get_year(photo)
-
-            if year not in groups:
-                groups[year] = []
-
-            groups[year].append(photo)
-
+    
+            date = self.metadata.get_date(photo)
+    
+            if date is None:
+                continue
+    
+            key = (
+                date.year,
+                date.month,
+            )
+    
+            if key not in groups:
+                groups[key] = []
+    
+            groups[key].append(photo)
+    
         return groups
     
     def build_move_plan(self, phone, groups):
-
+    
         operations = []
-
-        for year, photos in groups.items():
-
-            if year is None:
-                continue
-
+    
+        for (year, month), photos in groups.items():
+    
             for photo in photos:
-
+    
+                source = f"{phone.source}/{photo.path}"
+                
                 destination = (
-                    f"{phone.source}/{year}/{photo.name}"
+                    f"{phone.source}/"
+                #    f"{PurePosixPath(phone.source).parent}/"
+                    f"{year}/"
+                    f"{month:02d}/"
+                    f"{photo.name}"
                 )
-
+                
+                if source == destination:
+                    continue
+                
                 operations.append(
                     MoveOperation(
                         source=photo,
                         destination_path=destination,
                     )
                 )
-
+    
         return operations

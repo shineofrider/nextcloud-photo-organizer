@@ -1,41 +1,55 @@
 import re
 
-from app.models import WebDAVItem
+from app.models import (
+    WebDAVItem,
+    PhotoDate,
+)
 from email.utils import parsedate_to_datetime
 
-YEAR_PATTERN = re.compile(r"(19|20)\d{2}")
+DATE_PATTERN = re.compile(
+    r"(20\d{2})(0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])"
+)
 
 
 class MetadataExtractor:
 
 
-    def get_year(self, item):
+    def get_date(self, item) -> PhotoDate | None:
     
-        year = self.get_year_from_filename(item)
+        date = self.get_date_from_filename(item)
     
-        if year is not None:
-            return year
+        if date is not None:
+            return date
     
         if item.last_modified:
-        
+    
             try:
-                return parsedate_to_datetime(
+    
+                dt = parsedate_to_datetime(
                     item.last_modified
-                ).year
+                )
+    
+                return PhotoDate(
+                    year=dt.year,
+                    month=dt.month,
+                )
     
             except Exception:
                 pass
-            
+    
         return None
 
-    def get_year_from_filename(
+    def get_date_from_filename(
         self,
         item: WebDAVItem,
-    ) -> int | None:
-
-        match = YEAR_PATTERN.search(item.name)
-
+    ) -> PhotoDate | None:
+    
+        match = DATE_PATTERN.search(item.name)
+    
         if match is None:
             return None
-
-        return int(match.group())
+    
+        return PhotoDate(
+            year=int(match.group(1)),
+            month=int(match.group(2)),
+        )
